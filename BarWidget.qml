@@ -284,31 +284,22 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // One keycap with a double-headed arrow: the two parts say "swap this
-    // key" without relying on tiny text at bar size.
+    // Full-colour icon adapted from the reference: an Alt keycap and a Win
+    // keycap with two arrows swapping between them. Drawn as SVG so it stays
+    // crisp at the bar's physical pixel size.
     text: ""
     iconComponent: Component {
-      Rectangle {
-        readonly property real u: button.opticalSize / 16
-        anchors.centerIn: parent
-        width: 13.5 * u
-        height: 10 * u
-        radius: 2 * u
-        color: "transparent"
-        border.width: Math.max(1, 1.0 * u)
-        border.color: button.foreground
-
-        Text {
-          anchors.centerIn: parent
-          text: "↔"
-          color: button.foreground
-          font.family: button.fontFamily
-          font.pixelSize: 12 * u
-          font.bold: true
-        }
+      Image {
+        anchors.fill: parent
+        source: Qt.resolvedUrl("icon.svg")
+        sourceSize.width: width * Screen.devicePixelRatio
+        sourceSize.height: height * Screen.devicePixelRatio
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        asynchronous: true
       }
     }
-    opticalSize: Style.bar.iconCanvas + 2
+    opticalSize: Style.bar.statusSlot
     slotSize: Style.bar.statusSlot
     dimmed: !root.swapped
     tooltipText: root.tooltipText()
