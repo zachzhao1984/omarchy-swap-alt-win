@@ -284,61 +284,31 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // Two keycaps: "A" (Alt) and the Windows logo. Drawn instead of a font
-    // glyph so the pair reads as the two keys being swapped.
+    // One keycap with a double-headed arrow: the two parts say "swap this
+    // key" without relying on tiny text at bar size.
     text: ""
     iconComponent: Component {
-      Row {
-        id: keyRow
+      Rectangle {
         readonly property real u: button.opticalSize / 16
         anchors.centerIn: parent
-        spacing: 1.2 * u
+        width: 13.5 * u
+        height: 10 * u
+        radius: 2 * u
+        color: "transparent"
+        border.width: Math.max(1, 1.0 * u)
+        border.color: button.foreground
 
-        Rectangle {
-          width: 7.2 * keyRow.u
-          height: 9.5 * keyRow.u
-          radius: 1.8 * keyRow.u
-          color: "transparent"
-          border.width: Math.max(1, 1.1 * keyRow.u)
-          border.color: button.foreground
-
-          Text {
-            anchors.centerIn: parent
-            text: "A"
-            color: button.foreground
-            font.family: button.fontFamily
-            font.pixelSize: 6.2 * keyRow.u
-            font.bold: true
-          }
-        }
-
-        Rectangle {
-          width: 7.2 * keyRow.u
-          height: 9.5 * keyRow.u
-          radius: 1.8 * keyRow.u
-          color: "transparent"
-          border.width: Math.max(1, 1.1 * keyRow.u)
-          border.color: button.foreground
-
-          Grid {
-            anchors.centerIn: parent
-            columns: 2
-            rows: 2
-            spacing: 0.8 * keyRow.u
-
-            Repeater {
-              model: 4
-              Rectangle {
-                width: 1.9 * keyRow.u
-                height: width
-                color: button.foreground
-              }
-            }
-          }
+        Text {
+          anchors.centerIn: parent
+          text: "↔"
+          color: button.foreground
+          font.family: button.fontFamily
+          font.pixelSize: 12 * u
+          font.bold: true
         }
       }
     }
-    opticalSize: Style.bar.statusSlot
+    opticalSize: Style.bar.iconCanvas + 2
     slotSize: Style.bar.statusSlot
     dimmed: !root.swapped
     tooltipText: root.tooltipText()
