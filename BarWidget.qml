@@ -464,7 +464,9 @@ BarWidget {
 
           Item {
             width: parent.width
-            height: Math.max(appsCaption.implicitHeight, appsHint.implicitHeight)
+            // Reserve the chip strip height even with no selected apps, so
+            // adding the first chip does not push the list down.
+            height: Math.max(appsCaption.implicitHeight, appsHint.implicitHeight, Style.space(30))
 
             Text {
               id: appsCaption
@@ -487,6 +489,102 @@ BarWidget {
               color: root.panelDim
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
+            }
+
+            // Selected apps ride on the header line. A fixed-height, one-row
+            // horizontal list means adding or removing a chip never moves the
+            // app list underneath the pointer.
+            ListView {
+              id: chipStrip
+              anchors.left: appsCaption.right
+              anchors.leftMargin: Style.space(12)
+              anchors.right: appsHint.left
+              anchors.rightMargin: Style.space(12)
+              anchors.verticalCenter: parent.verticalCenter
+              height: Style.space(30)
+              orientation: ListView.Horizontal
+              spacing: Style.space(6)
+              clip: true
+              boundsBehavior: Flickable.StopAtBounds
+              interactive: contentWidth > width
+              model: root.apps
+              visible: root.apps.length > 0
+
+              delegate: Item {
+                required property string modelData
+
+                readonly property string icon: {
+                  var found = root.appIconIndex[String(modelData).toLowerCase()]
+                  return found !== undefined ? found : root.desktopIcon("")
+                }
+
+                width: Style.space(30)
+                height: width
+
+                Rectangle {
+                  anchors.fill: parent
+                  radius: Style.cornerRadius
+                  color: chipHover.hovered
+                    ? Util.alpha(root.panelText, 0.10)
+                    : Util.alpha(root.panelText, 0.05)
+                }
+
+                Image {
+                  id: chipIcon
+                  property bool fellBack: false
+                  anchors.centerIn: parent
+                  width: Style.space(18)
+                  height: width
+                  source: icon
+                  sourceSize.width: width * Screen.devicePixelRatio
+                  sourceSize.height: height * Screen.devicePixelRatio
+                  fillMode: Image.PreserveAspectFit
+                  asynchronous: true
+
+                  onStatusChanged: {
+                    if (status === Image.Error && !fellBack) {
+                      fellBack = true
+                      source = Quickshell.iconPath("application-x-executable", true)
+                    }
+                  }
+                }
+
+                HoverHandler {
+                  id: chipHover
+                }
+
+                PanelToolTip {
+                  visible: chipHover.hovered
+                  text: modelData
+                }
+
+                Rectangle {
+                  width: Style.space(13)
+                  height: width
+                  radius: width / 2
+                  anchors.top: parent.top
+                  anchors.right: parent.right
+                  color: Commons.Color.popups.background
+                  border.width: 1
+                  border.color: Util.alpha(root.panelText, 0.4)
+                  z: 2
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: "✕"
+                    color: root.panelText
+                    font.family: Style.font.family
+                    font.pixelSize: Math.round(parent.height * 0.66)
+                  }
+
+                  MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Style.space(3)
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.removeApp(modelData)
+                  }
+                }
+              }
             }
           }
 
@@ -670,94 +768,6 @@ BarWidget {
                   anchors.fill: parent
                   cursorShape: Qt.PointingHandCursor
                   onClicked: root.toggleApp(modelData.value)
-                }
-              }
-            }
-          }
-
-          // Icons of the apps already set to revert (or swap) in, each with a
-          // small x to drop that rule without opening either list.
-          Flow {
-            width: parent.width
-            spacing: Style.space(6)
-            visible: root.apps.length > 0
-
-            Repeater {
-              model: root.apps
-
-              delegate: Item {
-                required property string modelData
-
-                readonly property string icon: {
-                  var found = root.appIconIndex[String(modelData).toLowerCase()]
-                  return found !== undefined ? found : root.desktopIcon("")
-                }
-
-                width: Style.space(30)
-                height: width
-
-                Rectangle {
-                  anchors.fill: parent
-                  radius: Style.cornerRadius
-                  color: chipHover.hovered
-                    ? Util.alpha(root.panelText, 0.10)
-                    : Util.alpha(root.panelText, 0.05)
-                }
-
-                Image {
-                  id: chipIcon
-                  property bool fellBack: false
-                  anchors.centerIn: parent
-                  width: Style.space(18)
-                  height: width
-                  source: icon
-                  sourceSize.width: width * Screen.devicePixelRatio
-                  sourceSize.height: height * Screen.devicePixelRatio
-                  fillMode: Image.PreserveAspectFit
-                  asynchronous: true
-
-                  onStatusChanged: {
-                    if (status === Image.Error && !fellBack) {
-                      fellBack = true
-                      source = Quickshell.iconPath("application-x-executable", true)
-                    }
-                  }
-                }
-
-                HoverHandler {
-                  id: chipHover
-                }
-
-                PanelToolTip {
-                  visible: chipHover.hovered
-                  text: modelData
-                }
-
-                Rectangle {
-                  width: Style.space(13)
-                  height: width
-                  radius: width / 2
-                  anchors.top: parent.top
-                  anchors.right: parent.right
-                  color: Commons.Color.popups.background
-                  border.width: 1
-                  border.color: Util.alpha(root.panelText, 0.4)
-                  z: 2
-
-                  Text {
-                    anchors.centerIn: parent
-                    text: "✕"
-                    color: root.panelText
-                    font.family: Style.font.family
-                    font.pixelSize: Math.round(parent.height * 0.66)
-                  }
-
-                  MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Style.space(3)
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.removeApp(modelData)
-                  }
                 }
               }
             }
