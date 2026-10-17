@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/alt-win-swap.png" width="220" alt="Alt / Win 交换">
+</p>
+
 # Alt / Win 交换（Omarchy 插件）
 
 ![配置面板](docs/preview.png)
