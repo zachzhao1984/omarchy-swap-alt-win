@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import qs.Commons
 import qs.Commons as Commons
@@ -284,19 +285,33 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // Full-colour icon adapted from the reference: an Alt keycap and a Win
-    // keycap with two arrows swapping between them. Drawn as SVG so it stays
-    // crisp at the bar's physical pixel size.
+    // Monochrome line-art version of the reference: Alt and Win keycaps with
+    // two arrows swapping between them. The SVG is white so MultiEffect can
+    // tint it with the bar's foreground colour (and the dim state still works).
     text: ""
     iconComponent: Component {
-      Image {
+      Item {
         anchors.fill: parent
-        source: Qt.resolvedUrl("icon.svg")
-        sourceSize.width: width * Screen.devicePixelRatio
-        sourceSize.height: height * Screen.devicePixelRatio
-        fillMode: Image.PreserveAspectFit
-        smooth: true
-        asynchronous: true
+
+        Image {
+          id: iconImage
+          anchors.fill: parent
+          source: Qt.resolvedUrl("icon.svg")
+          sourceSize.width: width * Screen.devicePixelRatio
+          sourceSize.height: height * Screen.devicePixelRatio
+          fillMode: Image.PreserveAspectFit
+          smooth: true
+          asynchronous: true
+          visible: false
+          layer.enabled: true
+        }
+
+        MultiEffect {
+          anchors.fill: iconImage
+          source: iconImage
+          colorization: 1.0
+          colorizationColor: button.foreground
+        }
       }
     }
     opticalSize: Style.bar.statusSlot
