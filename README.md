@@ -62,7 +62,7 @@ omarchy plugin enable omarchy-swap-alt-win --section right
 
 ## 使用
 
-状态栏图标（键盘形）：
+状态栏图标（双向交换箭头）：
 
 | 操作 | 效果 |
 |------|------|

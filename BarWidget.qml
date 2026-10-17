@@ -284,7 +284,9 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "\uf11c"
+    // Nerd Font "exchange" glyph: two arrows swapping directions, which
+    // says what the plugin does better than the old keyboard icon.
+    text: "\uf0ec"
     slotSize: Style.bar.statusSlot
     dimmed: !root.swapped
     tooltipText: root.tooltipText()
