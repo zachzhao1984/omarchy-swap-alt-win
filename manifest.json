@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "omarchy-swap-alt-win",
+  "name": "Alt / Win Swap",
+  "version": "1.0.0",
+  "author": "Zheng Zhao",
+  "homepage": "https://github.com/zachzhao1984/omarchy-swap-alt-win",
+  "repository": "https://github.com/zachzhao1984/omarchy-swap-alt-win",
+  "license": "MIT",
+  "description": "Swap Alt and Win/Super with Hyprland's XKB altwin options, and switch back automatically inside the apps you list. The bar icon shows which way the keys currently behave.",
+  "keywords": [
+    "keyboard",
+    "altwin",
+    "xkb",
+    "hyprland",
+    "super",
+    "win",
+    "macos"
+  ],
+  "kinds": [
+    "bar-widget",
+    "service"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Alt / Win Swap",
+    "description": "Swapped Alt/Win indicator; click for per-app exceptions",
+    "category": "Input",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
