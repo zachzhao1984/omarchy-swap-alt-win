@@ -78,11 +78,21 @@ omarchy plugin enable omarchy-swap-alt-win --section right
 面板里可以：
 
 - 总开关
-- 一键把**当前聚焦的应用**加入 / 移出例外列表
-- 查看、逐条删除例外
+- 例外列表有两个来源，用 `Running apps` / `All apps` 切换：
+  - `Running apps`：**当前打开的程序**，按聚焦顺序排列，带程序图标，
+    点一下加入、再点一下移出。
+  - `All apps`：**所有已安装程序**（读取 `.desktop` 条目），同样带程序图标，
+    另有搜索框；选中后按 `StartupWMClass`（没有则用 desktop id）作为匹配规则。
+- 列表下方会显示**已选应用的图标**；每个图标右上角有一个小 `×`，点击即可移除
+  该应用的 revert（鼠标悬停图标可看到对应的 class / 规则）。`title:` 规则、
+  手写正则和已卸载应用的规则也会以图标形式显示在这里。
 - 切换“只在列表内交换”模式
 - 打开 / 关闭标题匹配
 - 查看当前基线（去除交换后的 `kb_options`）
+
+列表里的每一行显示程序图标、程序名、匹配用的窗口 class；已加入的会打勾。
+两个列表共用同一套行样式。列表较长时会在面板内滚动（约显示 4 行，搜索可快速定位）。
+面板本身是键盘可聚焦的层 shell 弹层，搜索框可以直接输入，`Esc` 关闭面板。
 
 命令行：
 
@@ -139,8 +149,8 @@ o.bind("SUPER + SHIFT + K", "Toggle Alt / Win swap", "omarchy-shell swap-alt-win
 - 默认只匹配窗口 class（Hyprland 的 `class`）；`matchTitles: true` 时同时匹配标题。
 - `title:` 前缀强制只匹配标题，例如 `title:YouTube`。
 
-窗口 class 可以用 `hyprctl activewindow -j | jq -r .class` 查看，或者直接点面板里的
-“Revert in this app”。
+窗口 class 可以用 `hyprctl activewindow -j | jq -r .class` 查看，或在面板的
+`FOCUSED APP` 一行直接看到。
 
 文件保存后会自动生效（文件监听），也可以手动
 
@@ -157,6 +167,10 @@ omarchy-shell swap-alt-win refresh
   Hyprland 0.5x 的 `hyprctl keyword` 对 Lua 配置解析器无效；写入后插件会读回确认，
   不匹配时再尝试 legacy 的 `keyword` 路径。
 - 监听 Hyprland socket2 的 `activewindow` 事件（含 XWayland 窗口），120ms 去抖后切换。
+- `Running apps` 列表来自 `hyprctl -j clients`：按 `focusHistoryID` 排序、按 class 去重，
+  图标按窗口 class / 程序名在 `DesktopEntries` 里查找；
+  在聚焦 / 开窗 / 关窗事件以及每次打开面板时重新读取。- `All apps` 列表来自 Quickshell 的 `DesktopEntries.applications`，按名称排序，
+  图标用 `Quickshell.iconPath()` 解析；`Hidden` / `NoDisplay` 条目默认不会出现。
 - 收到 `configreloaded` 时重新学习基线（你改了 `input.lua` 也能跟上），然后重新应用。
 - `Service.qml` 是唯一引擎实例（shell 对已启用插件的 service 只挂载一次）；
   `BarWidget.qml` 通过 `bar.shell.serviceFor("omarchy-swap-alt-win")` 取状态并转发操作。

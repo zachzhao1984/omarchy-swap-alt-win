@@ -191,6 +191,78 @@ function matchesAny(patterns, windowClass, windowTitle, matchTitles) {
   return false
 }
 
+// --------------------------------------------------------- running apps
+
+// Reduce `hyprctl -j clients` to one row per app class, most recently focused
+// first. Windows that are not mapped (hidden workspaces, special workspaces
+// that never appeared) are skipped; a class-less window falls back to its
+// title so it is still selectable.
+function parseClients(text) {
+  var clients = null
+  try {
+    clients = JSON.parse(String(text === undefined || text === null ? "" : text))
+  } catch (error) {
+    return []
+  }
+  if (!(clients instanceof Array)) return []
+
+  var rows = []
+  var byKey = {}
+  for (var i = 0; i < clients.length; i++) {
+    var client = clients[i]
+    if (!client || typeof client !== "object") continue
+    if (client.mapped === false) continue
+
+    var cls = String(client["class"] === undefined || client["class"] === null ? "" : client["class"]).trim()
+    var title = String(client.title === undefined || client.title === null ? "" : client.title).trim()
+    if (cls === "" && title === "") continue
+
+    var name = cls !== "" ? cls : title
+    var key = name.toLowerCase()
+    if (byKey[key]) {
+      byKey[key].count++
+      if (byKey[key].description === "") byKey[key].description = title
+      continue
+    }
+
+    var order = Number(client.focusHistoryID)
+    var row = {
+      value: name,
+      label: name,
+      description: title,
+      // Grouping bookkeeping, stripped before the rows leave this function.
+      order: isFinite(order) ? order : 1e15,
+      count: 1
+    }
+    byKey[key] = row
+    rows.push(row)
+  }
+
+  rows.sort(function(a, b) { return a.order - b.order })
+
+  var out = []
+  for (var j = 0; j < rows.length; j++) {
+    var description = rows[j].description
+    if (rows[j].count > 1) {
+      description = rows[j].count + " windows" + (description !== "" ? " · " + description : "")
+    }
+    out.push({ value: rows[j].value, label: rows[j].label, description: description })
+  }
+  return out
+}
+
+// The pattern stored when the user picks a desktop entry. StartupWMClass is
+// what the app asks the compositor to call its window; the desktop id (minus
+// the .desktop suffix) is the conventional fallback for entries that do not
+// declare one.
+function desktopPattern(entryId, startupClass) {
+  var cls = String(startupClass === undefined || startupClass === null ? "" : startupClass).trim()
+  if (cls !== "") return cls
+  var id = String(entryId === undefined || entryId === null ? "" : entryId).trim()
+  if (id.length > 8 && id.slice(-8) === ".desktop") id = id.slice(0, -8)
+  return id
+}
+
 // ------------------------------------------------------------- hyprland
 
 // The Lua snippet that sets the global keyboard options. Hyprland 0.5x+ has

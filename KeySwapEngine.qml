@@ -41,6 +41,16 @@ Item {
   property string activeClass: ""
   property string activeTitle: ""
 
+  // One row per app class that currently has a mapped window, sorted by focus
+  // recency. The panel uses this to offer the running apps directly instead
+  // of only the focused one. Refreshed on focus/open/close events and whenever
+  // the panel asks for it.
+  property var openApps: []
+
+  // Set by the bar panel. While it is closed the window list is not needed, so
+  // focus/open/close events skip the extra `hyprctl clients` call.
+  property bool panelOpen: false
+
   // "swapped" | "normal" | "restore" — what the config and the focused window
   // say the keys should be. Derived, so it is already correct while the
   // Hyprland side is still starting up.
@@ -130,6 +140,22 @@ Item {
     activeWindowProc.running = true
   }
 
+  function refreshOpenApps() {
+    if (clientsProc.running) return
+    clientsProc.running = true
+  }
+
+  Process {
+    id: clientsProc
+    command: ["hyprctl", "-j", "clients"]
+
+    stdout: StdioCollector {
+      id: clientsOut
+      waitForEnd: true
+      onStreamFinished: root.openApps = Model.parseClients(clientsOut.text)
+    }
+  }
+
   Process {
     id: activeWindowProc
     command: ["hyprctl", "-j", "activewindow"]
@@ -166,6 +192,9 @@ Item {
         var cls = comma === -1 ? data : data.slice(0, comma)
         var title = comma === -1 ? "" : data.slice(comma + 1)
         root.adoptActiveWindow(cls, title)
+        if (root.panelOpen) root.refreshOpenApps()
+      } else if (event.name === "openwindow" || event.name === "closewindow") {
+        if (root.panelOpen) root.refreshOpenApps()
       } else if (event.name === "configreloaded") {
         keymap.read()
         root.readActiveWindow()
@@ -220,6 +249,7 @@ Item {
   Component.onCompleted: {
     keymap.read()
     root.readActiveWindow()
+    root.refreshOpenApps()
   }
 
   // Turning the plugin off (or removing it) destroys this object without
@@ -237,6 +267,7 @@ Item {
   function refresh() {
     keymap.read()
     root.readActiveWindow()
+    root.refreshOpenApps()
   }
 
   function setEnabled(value) {

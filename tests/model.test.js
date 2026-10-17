@@ -21,6 +21,8 @@ const names = [
   "matchesApp",
   "matchesAny",
   "desiredSwap",
+  "parseClients",
+  "desktopPattern",
   "luaSetOptions"
 ]
 const Model = new Function(source + "\nreturn {" + names.join(",") + "}")()
@@ -198,6 +200,38 @@ test("title rules follow focus when matchTitles is on", () => {
   })
   assert.equal(Model.desiredSwap(config, "firefox", "YouTube — Firefox"), "normal")
   assert.equal(Model.desiredSwap(config, "firefox", "Hacker News"), "swapped")
+})
+
+// ------------------------------------------------------------ running apps
+
+const clientsJson = JSON.stringify([
+  { class: "firefox", title: "Docs", mapped: true, focusHistoryID: 1 },
+  { class: "Paseo", title: "Notes", mapped: true, focusHistoryID: 0 },
+  { class: "firefox", title: "News", mapped: true, focusHistoryID: 2 },
+  { class: "hidden-app", title: "Nope", mapped: false, focusHistoryID: 3 },
+  { class: "", title: "untitled window", mapped: true, focusHistoryID: 4 },
+  { class: "", title: "", mapped: true, focusHistoryID: 5 }
+])
+
+test("parseClients dedupes classes and sorts by focus recency", () => {
+  const rows = Model.parseClients(clientsJson)
+  assert.deepEqual(rows.map(r => r.value), ["Paseo", "firefox", "untitled window"])
+  assert.equal(rows[1].description, "2 windows · Docs")
+  assert.equal(rows[2].value, "untitled window")
+})
+
+test("parseClients survives malformed input", () => {
+  assert.deepEqual(Model.parseClients(""), [])
+  assert.deepEqual(Model.parseClients("not json"), [])
+  assert.deepEqual(Model.parseClients("{}"), [])
+  assert.deepEqual(Model.parseClients(null), [])
+})
+
+test("desktopPattern prefers StartupWMClass, then the desktop id", () => {
+  assert.equal(Model.desktopPattern("org.gnome.Nautilus", ""), "org.gnome.Nautilus")
+  assert.equal(Model.desktopPattern("chromium.desktop", "chromium"), "chromium")
+  assert.equal(Model.desktopPattern("firefox.desktop", ""), "firefox")
+  assert.equal(Model.desktopPattern("", ""), "")
 })
 
 // --------------------------------------------------------------- hyprland
