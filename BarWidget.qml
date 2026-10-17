@@ -492,9 +492,7 @@ BarWidget {
 
           Text {
             width: parent.width
-            text: root.appListMode === "all"
-              ? "Pick any installed app."
-              : "Click a running app to add or remove it."
+            text: "Select apps to revert or unrevert the swap"
             textFormat: Text.PlainText
             wrapMode: Text.WordWrap
             color: root.panelDim
