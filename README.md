@@ -1,53 +1,56 @@
 <p align="center">
-  <img src="docs/alt-win-swap.png" width="220" alt="Alt / Win 交换">
+  <img src="docs/alt-win-swap.png" width="220" alt="Alt / Win swap">
 </p>
 
-# Alt / Win 交换（Omarchy 插件）
+# Alt / Win Swap (Omarchy plugin)
 
-![配置面板](docs/preview.png)
+![Configuration panel](docs/preview.png)
 
-插件 id：`omarchy-swap-alt-win`（仓库/目录同名）· IPC 目标：`swap-alt-win` ·
-配置文件：`~/.config/omarchy/swap-alt-win.json`
+Plugin id: `omarchy-swap-alt-win` (same as the repo/directory) · IPC target:
+`swap-alt-win` · Config file: `~/.config/omarchy/swap-alt-win.json`
 
-一个 Omarchy shell 插件，用 Hyprland 的 XKB `altwin` 选项把 **Alt** 和 **Win/Super**
-键对调，并且可以按**当前聚焦的应用**自动切换回来：把某个应用加入例外列表后，
-聚焦它时恢复原始键位，离开后再次交换。
+An Omarchy shell plugin that swaps the **Alt** and **Win/Super** keys with
+Hyprland's XKB `altwin` option, and can switch back automatically based on the
+**focused app**: add an app to the exception list and the original keys return
+while that app is focused, then the swap comes back when you leave.
 
-适合 macOS 键盘习惯（Cmd 位置）或键盘物理位置与标注不一致的情况。
+It is aimed at macOS keyboard habits (the Cmd position) or keyboards whose
+physical layout does not match their labels.
 
-- 保留你已有的 `kb_options`（例如 `compose:caps,ctrl:swapcaps`），只增删交换选项。
-- 支持反向模式：只在列表里的应用内交换，其他应用保持原样。
-- 服务里只有一个引擎实例；每个显示器上的状态栏图标只是它的视图。
-- 插件关闭 / 禁用 / 卸载时会把你的原始键位放回去。
-- 手改配置或 `hyprctl reload` 后会自动重新学习基线并重新应用。
+- Keeps your existing `kb_options` (for example `compose:caps,ctrl:swapcaps`) and only adds/removes the swap option.
+- Supports the inverse mode: swap only inside the listed apps, and leave everything else untouched.
+- There is a single engine instance in the service; the bar icon on each monitor is only a view of it.
+- Restores your original keys when the plugin is turned off, disabled, or removed.
+- Re-learns the baseline and reapplies after hand-editing the config or `hyprctl reload`.
 
-## 环境要求
+## Requirements
 
-- Omarchy 4（Hyprland 0.5x，Lua 配置）。
-- 写入走 `hyprctl eval`；老式（legacy）配置会自动回退到 `hyprctl keyword`。
-- 不需要 root，不修改 `~/.config/hypr/input.lua`。
+- Omarchy 4 (Hyprland 0.5x, Lua config).
+- Writes go through `hyprctl eval`; legacy configs fall back to `hyprctl keyword` automatically.
+- No root required, and `~/.config/hypr/input.lua` is not modified.
 
-> **注意：** 交换是全局的。交换生效时，Omarchy 的 `SUPER` 快捷键会改由**物理
-> Alt 键**触发；`Alt` 快捷键则改由物理 Win 键触发。这正是“交换键位”的含义。
+> **Note:** the swap is global. While it is active, Omarchy's `SUPER` shortcuts
+> are triggered by the **physical Alt key**, and `Alt` shortcuts by the physical
+> Win key. That is exactly what "swapping the keys" means.
 
-## 安装
+## Installation
 
-直接从 GitHub 安装（推荐）：
+Install directly from GitHub (recommended):
 
 ```bash
 omarchy plugin add https://github.com/zachzhao1984/omarchy-swap-alt-win --enable --yes
 ```
 
-从本地仓库安装：
+Install from a local checkout:
 
 ```bash
-# 在本仓库目录中
-./install.sh                 # 安装并把键盘图标放进状态栏右侧
-./install.sh --no-enable     # 只安装，不启用
-./install.sh --headless      # 安装并作为无界面服务启用（不占状态栏）
+# from this repository's directory
+./install.sh                 # install and put the keyboard icon on the right side of the bar
+./install.sh --no-enable     # install only
+./install.sh --headless      # install and enable as a headless service (no bar widget)
 ```
 
-手动安装：
+Manual installation:
 
 ```bash
 mkdir -p ~/.config/omarchy/plugins
@@ -56,77 +59,84 @@ omarchy plugin validate ~/.config/omarchy/plugins/omarchy-swap-alt-win
 omarchy plugin enable omarchy-swap-alt-win --section right
 ```
 
-升级 / 重新安装：再次运行 `./install.sh` 即可（不会重复启用）。
+Upgrade / reinstall: run `./install.sh` again (it will not enable the plugin
+twice).
 
-无界面模式也可以直接编辑 `~/.config/omarchy/shell.json`，在顶层 `plugins` 数组里加入：
+Headless mode can also be configured by editing `~/.config/omarchy/shell.json`
+directly and adding the plugin to the top-level `plugins` array:
 
 ```json
 { "id": "omarchy-swap-alt-win" }
 ```
 
-## 使用
+## Usage
 
-状态栏图标（单色 Alt / Win 键帽 + 双向箭头）：
+Bar icon (monochrome Alt / Win keycaps with a double-headed arrow):
 
-| 操作 | 效果 |
-|------|------|
-| 左键 | 打开配置面板 |
-| 右键 | 打开 / 关闭插件 |
-| 中键 | 重新读取 Hyprland 与当前窗口 |
+| Action | Effect |
+|--------|--------|
+| Left click | Open the configuration panel |
+| Right click | Turn the plugin on / off |
+| Middle click | Re-read Hyprland state and the focused window |
 
-图标含义：
+Icon states:
 
-- 亮 = 当前正在交换（物理 Alt 触发 Super）
-- 暗 = 当前是原始键位：可能是插件关闭，或正处在例外应用里
+- Bright = currently swapping (physical Alt triggers Super)
+- Dim = original keys: the plugin may be off, or the focused app is an exception
 
-面板里可以：
+In the panel you can:
 
-- 总开关
-- 例外列表有两个来源，用 `Running apps` / `All apps` 切换：
-  - `Running apps`：**当前打开的程序**，按聚焦顺序排列，带程序图标，
-    点一下加入、再点一下移出。
-  - `All apps`：**所有已安装程序**（读取 `.desktop` 条目），同样带程序图标，
-    另有搜索框；选中后按 `StartupWMClass`（没有则用 desktop id）作为匹配规则。
-- `REVERT IN` / `SWAP ONLY IN` 标题同一行会显示**已选应用的图标**（可横向滚动）；
-  每个图标右上角有一个小 `×`，点击即可移除该应用的 revert（鼠标悬停图标可看到
-  对应的 class / 规则）。`title:` 规则、手写正则和已卸载应用的规则也会以图标形式
-  显示在这里。
-- 切换“只在列表内交换”模式
-- 打开 / 关闭标题匹配
-- 查看当前基线（去除交换后的 `kb_options`）
+- Toggle the master switch
+- Choose the exception list from two sources with `Running apps` / `All apps`:
+  - `Running apps`: **currently open programs**, in focus order, with app
+    icons. Click to add, click again to remove.
+  - `All apps`: **every installed program** (read from `.desktop` entries),
+    also with app icons, plus a search field. The match rule is
+    `StartupWMClass` (or the desktop id when that is absent).
+- The `REVERT IN` / `SWAP ONLY IN` header row shows the icons of the selected
+  apps (horizontally scrollable). Each icon has a small `×` in its top-right
+  corner that removes that app's revert; hover an icon to see the class / rule
+  it maps to. `title:` rules, hand-written regexes, and rules for uninstalled
+  apps appear as icons here too.
+- Toggle "Swap only inside these apps"
+- Toggle title matching
+- See the current baseline (`kb_options` with the swap removed)
 
-列表里的每一行显示程序图标、程序名、匹配用的窗口 class；已加入的会打勾。
-两个列表共用同一套行样式。列表较长时会在面板内滚动（约显示 4 行，搜索可快速定位）。
-面板本身是键盘可聚焦的层 shell 弹层，搜索框可以直接输入，`Esc` 关闭面板。
+Each row in the list shows the app icon, name, and the window class used for
+matching; selected apps are checked. Both lists share the same row style. Long
+lists scroll inside the panel (about 4 rows visible; use search to jump). The
+panel itself is a keyboard-focusable layer-shell popup, so you can type in the
+search field directly; `Esc` closes it.
 
-命令行：
+Command line:
 
 ```bash
-omarchy-shell swap-alt-win status        # JSON：状态、当前窗口、配置
+omarchy-shell swap-alt-win status        # JSON: state, focused window, config
 omarchy-shell swap-alt-win enable
 omarchy-shell swap-alt-win disable
 omarchy-shell swap-alt-win toggle
 omarchy-shell swap-alt-win isSwapped     # true/false
 omarchy-shell swap-alt-win keyState      # swapped / normal / restore
-omarchy-shell swap-alt-win addActive     # 当前窗口加入列表
+omarchy-shell swap-alt-win addActive     # add the focused window to the list
 omarchy-shell swap-alt-win removeActive
 omarchy-shell swap-alt-win setMode revert|only
-omarchy-shell swap-alt-win refresh       # 重新读取
+omarchy-shell swap-alt-win refresh       # re-read
 ```
 
-### 快捷键（可选）
+### Shortcut (optional)
 
-在 `~/.config/hypr/bindings.lua` 里可以加一个总开关：
+You can add a master toggle in `~/.config/hypr/bindings.lua`:
 
 ```lua
 o.bind("SUPER + SHIFT + K", "Toggle Alt / Win swap", "omarchy-shell swap-alt-win toggle")
 ```
 
-交换生效时，`SUPER` 快捷键会随物理 Alt 键走，写绑定的时候留意这一点。
+While the swap is active, `SUPER` shortcuts follow the physical Alt key, so keep
+that in mind when writing the binding.
 
-## 配置
+## Configuration
 
-首次运行会创建 `~/.config/omarchy/swap-alt-win.json`：
+The first run creates `~/.config/omarchy/swap-alt-win.json`:
 
 ```json
 {
@@ -139,73 +149,89 @@ o.bind("SUPER + SHIFT + K", "Toggle Alt / Win swap", "omarchy-shell swap-alt-win
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `enabled` | 插件总开关。`false` 时恢复原始键位。 |
-| `mode` | `revert`：默认交换，只在 `apps` 里恢复原样。<br>`only`：默认原样，只在 `apps` 里交换。 |
-| `swapOption` | XKB 选项。默认 `altwin:swap_alt_win`（左右两侧都换）。也可用 `altwin:swap_lalt_lwin` / `altwin:swap_ralt_rwin` 只换一侧。 |
-| `matchTitles` | `true` 时，普通规则也会匹配窗口标题。 |
-| `apps` | 例外 / 目标应用列表。 |
+| Field | Description |
+|-------|-------------|
+| `enabled` | Master switch. When `false`, the original keys are restored. |
+| `mode` | `revert`: swap by default, restore inside `apps`.<br>`only`: leave keys alone by default, swap inside `apps`. |
+| `swapOption` | XKB option. Defaults to `altwin:swap_alt_win` (swaps both sides). You can also use `altwin:swap_lalt_lwin` / `altwin:swap_ralt_rwin` to swap only one side. |
+| `matchTitles` | When `true`, plain rules also match window titles. |
+| `apps` | Exception / target app list. |
 
-匹配规则：
+Matching rules:
 
-- 不区分大小写。
-- 能当正则就当正则（如 `firefox|chromium`）；写不成正则时按普通子串匹配。
-- 默认只匹配窗口 class（Hyprland 的 `class`）；`matchTitles: true` 时同时匹配标题。
-- `title:` 前缀强制只匹配标题，例如 `title:YouTube`。
+- Case-insensitive.
+- Treated as a regex when possible (for example `firefox|chromium`); falls back
+  to a plain substring match when it is not a valid regex.
+- Matches the window class (Hyprland's `class`) by default; with
+  `matchTitles: true` it also matches titles.
+- A `title:` prefix forces title-only matching, for example `title:YouTube`.
 
-窗口 class 可以用 `hyprctl activewindow -j | jq -r .class` 查看，或在面板的
-`FOCUSED APP` 一行直接看到。
+You can inspect the window class with
+`hyprctl activewindow -j | jq -r .class`, or see it directly in the panel's
+`FOCUSED APP` row.
 
-文件保存后会自动生效（文件监听），也可以手动
+Saved changes take effect automatically (file watcher), or run:
 
 ```bash
 omarchy-shell swap-alt-win refresh
 ```
 
-## 工作原理
+## How it works
 
-- 读取 `hyprctl -j getoption input:kb_options` 得到当前基线，剔除本插件管理的交换选项，
-  得到 `plainOptions`。
-- 交换状态 = `plainOptions + swapOption`；恢复状态 = 基线。
-- 通过 `hyprctl eval 'hl.config({ input = { kb_options = "..." } })'` 写入。
-  Hyprland 0.5x 的 `hyprctl keyword` 对 Lua 配置解析器无效；写入后插件会读回确认，
-  不匹配时再尝试 legacy 的 `keyword` 路径。
-- 监听 Hyprland socket2 的 `activewindow` 事件（含 XWayland 窗口），120ms 去抖后切换。
-- `Running apps` 列表来自 `hyprctl -j clients`：按 `focusHistoryID` 排序、按 class 去重，
-  图标按窗口 class / 程序名在 `DesktopEntries` 里查找；
-  在聚焦 / 开窗 / 关窗事件以及每次打开面板时重新读取。- `All apps` 列表来自 Quickshell 的 `DesktopEntries.applications`，按名称排序，
-  图标用 `Quickshell.iconPath()` 解析；`Hidden` / `NoDisplay` 条目默认不会出现。
-- 收到 `configreloaded` 时重新学习基线（你改了 `input.lua` 也能跟上），然后重新应用。
-- `Service.qml` 是唯一引擎实例（shell 对已启用插件的 service 只挂载一次）；
-  `BarWidget.qml` 通过 `bar.shell.serviceFor("omarchy-swap-alt-win")` 取状态并转发操作。
+- Reads `hyprctl -j getoption input:kb_options` to get the current baseline,
+  strips the swap options managed by this plugin, and produces `plainOptions`.
+- Swap state = `plainOptions + swapOption`; restore state = the baseline.
+- Writes through `hyprctl eval 'hl.config({ input = { kb_options = "..." } })'`.
+  Hyprland 0.5x's `hyprctl keyword` does not work with the Lua config parser, so
+  the plugin reads the value back to confirm and falls back to the legacy
+  `keyword` path when it did not apply.
+- Listens to Hyprland socket2's `activewindow` events (including XWayland
+  windows) and switches after a 120 ms debounce.
+- The `Running apps` list comes from `hyprctl -j clients`: sorted by
+  `focusHistoryID`, deduplicated by class, with icons looked up by window class
+  / app name in `DesktopEntries`. It is refreshed on focus / open / close events
+  and every time the panel opens.
+- The `All apps` list comes from Quickshell's `DesktopEntries.applications`,
+  sorted by name, with icons resolved through `Quickshell.iconPath()`;
+  `Hidden` / `NoDisplay` entries are excluded by default.
+- On `configreloaded`, re-learns the baseline (so edits to `input.lua` are
+  picked up) and reapplies.
+- `Service.qml` is the single engine instance (the shell mounts a plugin's
+  service once while it is enabled); `BarWidget.qml` gets the state through
+  `bar.shell.serviceFor("omarchy-swap-alt-win")` and forwards actions.
 
-## 已知限制
+## Known limitations
 
-- `kb_options` 是全局设置，所有键盘一起换。需要按设备区分时，可以在
-  `~/.config/hypr/input.lua` 里给某台键盘单独设置 `kb_options`（会覆盖全局）。
-- 切换瞬间如果正按着 Alt/Win/Super，可能会有一次修饰键状态抖动；松开再按即可。
-- 某些游戏使用原始输入或自己的键位设置，交换对它们是否生效取决于游戏读取哪一层。
-- 状态栏图标依赖 Omarchy 自带状态栏；用无界面模式则没有图标。
+- `kb_options` is global, so all keyboards are swapped together. To
+  differentiate by device, set `kb_options` for a specific keyboard in
+  `~/.config/hypr/input.lua` (it overrides the global setting).
+- If you are holding Alt/Win/Super at the moment of a switch, a modifier may
+  flicker once; release and press it again.
+- Some games use raw input or their own key handling; whether the swap applies
+  depends on which layer the game reads.
+- The bar icon depends on Omarchy's built-in bar; headless mode has no icon.
 
-## 排错
+## Troubleshooting
 
 ```bash
-hyprctl getoption input:kb_options          # 当前生效的选项
-omarchy-shell swap-alt-win status              # 插件视角
-journalctl --user -b | grep -i swap-alt-win    # 插件日志
+hyprctl getoption input:kb_options             # currently active options
+omarchy-shell swap-alt-win status              # plugin's view
+journalctl --user -b | grep -i swap-alt-win    # plugin logs
 ```
 
-- 图标一直是暗的：确认 `~/.config/omarchy/shell.json` 的 `bar.layout` 里有
-  `{ "id": "omarchy-swap-alt-win" }`，或 `omarchy plugin list | grep omarchy-swap-alt-win`。
-- 状态显示 `error`：通常是 `hyprctl` 不可用。确认在 Hyprland 会话内运行。
-- `omarchy-shell swap-alt-win status` 提示 `Target not found`：插件服务还没挂载
-  （常见于刚热重载完插件）。运行 `omarchy restart shell` 即可；`install.sh`
-  结束前也会自动检查并提示。
-- 想立刻恢复原始键位：右键图标、`omarchy-shell swap-alt-win disable`，或
-  `omarchy plugin disable omarchy-swap-alt-win`。
+- The icon is always dim: check that `~/.config/omarchy/shell.json`'s
+  `bar.layout` contains `{ "id": "omarchy-swap-alt-win" }`, or run
+  `omarchy plugin list | grep omarchy-swap-alt-win`.
+- The status shows `error`: usually `hyprctl` is unavailable. Make sure you are
+  running inside a Hyprland session.
+- `omarchy-shell swap-alt-win status` says `Target not found`: the plugin
+  service is not mounted yet (common right after a hot reload). Run
+  `omarchy restart shell`; `install.sh` also checks and warns at the end.
+- To restore the original keys immediately: right-click the icon, run
+  `omarchy-shell swap-alt-win disable`, or
+  `omarchy plugin disable omarchy-swap-alt-win`.
 
-## 卸载
+## Uninstall
 
 ```bash
 omarchy plugin disable omarchy-swap-alt-win
@@ -213,15 +239,16 @@ omarchy plugin remove omarchy-swap-alt-win
 rm -f ~/.config/omarchy/swap-alt-win.json
 ```
 
-禁用或卸载时插件会把原始键位写回去。
+Disabling or removing the plugin writes the original keys back.
 
-## 开发
+## Development
 
 ```bash
-node --test tests/          # Model.js 的纯逻辑测试
+node --test tests/          # pure-logic tests for Model.js
 ```
 
-修改 QML 后，shell 会热重载插件文件，但已加载的组件可能被缓存；可靠的做法是：
+After editing QML the shell hot-reloads plugin files, but loaded components may
+be cached. The reliable path is:
 
 ```bash
 ./install.sh --no-enable
