@@ -28,6 +28,14 @@
 
 ## 安装
 
+直接从 GitHub 安装（推荐）：
+
+```bash
+omarchy plugin add https://github.com/zachzhao1984/omarchy-swap-alt-win --enable --yes
+```
+
+从本地仓库安装：
+
 ```bash
 # 在本仓库目录中
 ./install.sh                 # 安装并把键盘图标放进状态栏右侧
