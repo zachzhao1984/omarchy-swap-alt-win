@@ -314,7 +314,7 @@ BarWidget {
         }
       }
     }
-    opticalSize: Style.bar.iconCanvas + 3
+    opticalSize: Style.bar.iconCanvas + 2
     slotSize: Style.bar.statusSlot
     dimmed: !root.swapped
     tooltipText: root.tooltipText()
