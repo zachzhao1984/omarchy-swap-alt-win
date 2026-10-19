@@ -78,6 +78,51 @@ function normalizeApps(value) {
   return apps
 }
 
+// A literal string turned into a safe regex. Desktop-entry names can contain
+// regex metacharacters, so aliases are escaped before they reach matchesApp().
+function escapePattern(value) {
+  var text = String(value === undefined || value === null ? "" : value)
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+// Expand configured app patterns with the window-class aliases discovered
+// from the desktop-entry catalog. Some apps (Steam games in particular) do not
+// use their display name or desktop id as the Hyprland class; the alias list
+// lets an existing "Dota 2" rule match "steam_app_570".
+function expandApps(apps, aliases) {
+  var source = apps instanceof Array ? apps : []
+  var map = aliases && typeof aliases === "object" ? aliases : {}
+  var out = []
+  var seen = {}
+
+  for (var i = 0; i < source.length; i++) {
+    var pattern = typeof source[i] === "string" ? source[i] : ""
+    if (pattern === "") continue
+
+    var key = pattern.toLowerCase()
+    if (seen[key] !== true) {
+      seen[key] = true
+      out.push(pattern)
+    }
+
+    // `title:` rules are explicit; they must not pick up class aliases.
+    if (key.indexOf("title:") === 0) continue
+
+    var extra = map[key]
+    if (!(extra instanceof Array)) continue
+    for (var j = 0; j < extra.length; j++) {
+      var alias = typeof extra[j] === "string" ? extra[j] : ""
+      if (alias === "") continue
+      var aliasKey = alias.toLowerCase()
+      if (seen[aliasKey] === true) continue
+      seen[aliasKey] = true
+      out.push(alias)
+    }
+  }
+
+  return out
+}
+
 // --------------------------------------------------------------- options
 
 // XKB option lists are comma separated. Split, trim, and drop empties so a

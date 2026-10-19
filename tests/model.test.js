@@ -12,6 +12,8 @@ const names = [
   "normalizeConfig",
   "normalizeSwapOption",
   "normalizeApps",
+  "escapePattern",
+  "expandApps",
   "splitOptions",
   "joinOptions",
   "addOption",
@@ -70,6 +72,32 @@ test("normalizeSwapOption only accepts option syntax", () => {
 test("normalizeApps caps runaway lists", () => {
   const many = Array.from({ length: 200 }, (_, i) => "app" + i)
   assert.equal(Model.normalizeApps(many).length, 100)
+})
+
+test("escapePattern turns aliases into literal regexes", () => {
+  assert.equal(Model.escapePattern("Dota 2"), "Dota 2")
+  assert.equal(Model.escapePattern("C++ (beta)"), "C\\+\\+ \\(beta\\)")
+  assert.equal(Model.escapePattern("a.b[c]"), "a\\.b\\[c\\]")
+})
+
+test("expandApps adds desktop-entry class aliases", () => {
+  const aliases = { "dota 2": ["steam_app_570", "Dota2"] }
+  assert.deepEqual(
+    Model.expandApps(["Dota 2", "firefox"], aliases),
+    ["Dota 2", "steam_app_570", "Dota2", "firefox"]
+  )
+  // title: rules stay explicit
+  assert.deepEqual(
+    Model.expandApps(["title:YouTube"], { "title:youtube": ["ignored"] }),
+    ["title:YouTube"]
+  )
+})
+
+test("expanded aliases make a Steam game match its window class", () => {
+  const expanded = Model.expandApps(["Dota 2"], { "dota 2": ["steam_app_570", "Dota2"] })
+  const config = Model.normalizeConfig({ enabled: true, mode: "revert", apps: expanded })
+  assert.equal(Model.desiredSwap(config, "steam_app_570", ""), "normal")
+  assert.equal(Model.desiredSwap(config, "Paseo", ""), "swapped")
 })
 
 // ----------------------------------------------------------------- options

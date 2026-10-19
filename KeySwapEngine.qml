@@ -31,6 +31,13 @@ Item {
   readonly property bool matchTitles: config.matchTitles === true
   readonly property var apps: config.apps ? config.apps : []
 
+  // Lowercase app name/id/class -> escaped literal aliases for the same
+  // desktop entry. Some apps (Steam games especially) do not use their name or
+  // desktop id as the Hyprland class; expanding the rules lets an existing
+  // "Dota 2" entry match "steam_app_570".
+  property var aliasMap: ({})
+  readonly property var effectiveApps: Model.expandApps(root.apps, root.aliasMap)
+
   // Raw option string Hyprland had before this plugin wrote anything.
   property string configuredOptions: ""
   // configuredOptions with every managed swap option taken out.
@@ -53,8 +60,19 @@ Item {
 
   // "swapped" | "normal" | "restore" — what the config and the focused window
   // say the keys should be. Derived, so it is already correct while the
-  // Hyprland side is still starting up.
-  readonly property string keyState: Model.desiredSwap(root.config, root.activeClass, root.activeTitle)
+  // Hyprland side is still starting up. The app list is expanded with desktop
+  // class aliases so names like "Dota 2" match Steam's window class.
+  readonly property string keyState: {
+    var current = root.config
+    var effective = {
+      enabled: current.enabled,
+      mode: current.mode,
+      matchTitles: current.matchTitles,
+      swapOption: current.swapOption,
+      apps: root.effectiveApps
+    }
+    return Model.desiredSwap(effective, root.activeClass, root.activeTitle)
+  }
   property string appliedOptions: ""
   property bool applied: false
 
@@ -145,6 +163,65 @@ Item {
     clientsProc.running = true
   }
 
+  // Build the class-alias table from the desktop-entry catalog. Steam games
+  // are the motivating case: a "Dota 2" entry has no StartupWMClass, and the
+  // window arrives as "steam_app_570".
+  function buildAliasMap() {
+    var values = DesktopEntries.applications.values || []
+    var map = ({})
+    for (var i = 0; i < values.length; i++) {
+      var entry = values[i]
+      if (!entry) continue
+
+      var candidates = []
+      var startup = String(entry.startupClass || "").trim()
+      var id = String(entry.id || "").trim()
+      if (id.length > 8 && id.slice(-8) === ".desktop") id = id.slice(0, -8)
+      var name = String(entry.name || "").trim()
+      var exec = String(entry.execString || "")
+
+      if (startup !== "") candidates.push(startup)
+      if (id !== "") candidates.push(id)
+      if (name !== "") candidates.push(name)
+      var compact = name.replace(/\s+/g, "")
+      if (compact !== "" && compact !== name) candidates.push(compact)
+
+      var steam = /steam:\/\/rungameid\/(\d+)/.exec(exec)
+      if (steam) candidates.push("steam_app_" + steam[1])
+
+      var seen = {}
+      var aliases = []
+      for (var k = 0; k < candidates.length; k++) {
+        var key = candidates[k].toLowerCase()
+        if (seen[key] === true) continue
+        seen[key] = true
+        aliases.push(Model.escapePattern(candidates[k]))
+      }
+      for (var j = 0; j < candidates.length; j++) {
+        var mapKey = candidates[j].toLowerCase()
+        var existing = map[mapKey]
+        if (!existing) {
+          map[mapKey] = aliases
+          continue
+        }
+
+        // Two entries can share a name; keep the union instead of letting the
+        // last one win.
+        var merged = existing.slice()
+        var mergedSeen = {}
+        for (var m = 0; m < merged.length; m++) mergedSeen[merged[m].toLowerCase()] = true
+        for (var n = 0; n < aliases.length; n++) {
+          var aliasKey = aliases[n].toLowerCase()
+          if (mergedSeen[aliasKey] === true) continue
+          mergedSeen[aliasKey] = true
+          merged.push(aliases[n])
+        }
+        map[mapKey] = merged
+      }
+    }
+    root.aliasMap = map
+  }
+
   Process {
     id: clientsProc
     command: ["hyprctl", "-j", "clients"]
@@ -218,6 +295,20 @@ Item {
     function onLoaded() { root.scheduleApply(true) }
   }
 
+  // The desktop catalog fills in asynchronously (one valuesChanged per entry).
+  // Rebuild the alias table after the burst settles instead of on every entry.
+  Connections {
+    target: DesktopEntries.applications
+    function onValuesChanged() { aliasDebounce.restart() }
+  }
+
+  Timer {
+    id: aliasDebounce
+    interval: 600
+    repeat: false
+    onTriggered: root.buildAliasMap()
+  }
+
   Connections {
     target: keymap
 
@@ -250,6 +341,10 @@ Item {
     keymap.read()
     root.readActiveWindow()
     root.refreshOpenApps()
+    // Start the desktop-entry scan and build the alias table while the shell
+    // starts up, so by the time an app is focused the rules are complete.
+    DesktopEntries.applications.values
+    aliasDebounce.restart()
   }
 
   // Turning the plugin off (or removing it) destroys this object without
@@ -335,6 +430,7 @@ Item {
       swapOption: root.config.swapOption,
       plainOptions: root.plainOptions,
       apps: root.apps,
+      effectiveApps: root.effectiveApps,
       error: root.lastError
     })
   }

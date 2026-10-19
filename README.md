@@ -165,6 +165,9 @@ Matching rules:
 - Matches the window class (Hyprland's `class`) by default; with
   `matchTitles: true` it also matches titles.
 - A `title:` prefix forces title-only matching, for example `title:YouTube`.
+- Rules for installed apps also match class aliases derived from the desktop
+  entry, so a display name works even when the window class differs. For
+  example, `Dota 2` also matches Steam's `steam_app_570` and `dota2` classes.
 
 You can inspect the window class with
 `hyprctl activewindow -j | jq -r .class`, or see it directly in the panel's
